@@ -5,7 +5,7 @@ def main():
     try:
         print()
         print('Press CTRL+C to quit')
-        driver.drive()        
+        driver.drive_autonoumous()        
     except SystemExit:
         print("exited")
     except KeyboardInterrupt:

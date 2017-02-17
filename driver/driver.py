@@ -23,7 +23,7 @@ import pygame
 import subprocess
 from . import controller
 from model import save_data
-# from model import predict
+from model import predict
 
 sys.stdout = sys.stderr
 
@@ -36,93 +36,157 @@ global running
 global DATA
 global CONTROL
 
-# Image stream processing thread
-class StreamProcessor(threading.Thread):
-
-    def __init__(self, camera):
-        super(StreamProcessor, self).__init__()
-        self.stream = picamera.array.PiRGBArray(camera)
-        self.event = threading.Event()
-        self.terminated = False
-        self.start()
-        self.begin = 0
-
-
-    def run(self):
-        global lastFrame
-        global lockFrame
-        global DATA
-        global CONTROL
-        print('in process stream run')
-        # This method runs in a separate thread
-        while not self.terminated:
-            # Wait for an image to be written to the stream
-            if self.event.wait(1):
-                try:
-                    # Read the image and save globally
-                    self.stream.seek(0)
-                    retval, thisFrame = cv2.imencode('.jpg', self.stream.array)
-                    lockFrame.acquire()
-                    if 'driveLeft' in CONTROL:
-                        DATA[str(time.time())] = {
-                            'img' : thisFrame,
-                            'left': CONTROL['driveLeft'],
-                            'right': CONTROL['driveRight']}
-                    lastFrame = thisFrame
-                    lockFrame.release()
-                finally:
-                    # Reset the stream and event
-                    self.stream.seek(0)
-                    self.stream.truncate()
-                    self.event.clear()
-
-
-# Image capture thread
 class ImageCapture(threading.Thread):
-
     def __init__(self):
 
-        super(ImageCapture, self).__init__()
+        threading.Thread.__init__(self)
+
+        self.daemon = True
         self.start()
 
     def run(self):
-        global camera
-        global processor
-        print('Start the stream using the video port')
-        camera.capture_sequence(self.TriggerStream(), format='bgr', use_video_port=True)
-        print('Terminating camera processing...')
-        processor.terminated = True
-        processor.join()
-        print('Processing terminated.')
-
-    # Stream delegation loop
-    def TriggerStream(self):
-        print('in trigger stream')
-        global running
-        while running:
-            if processor.event.is_set():
-                if not 'driveLeft' in CONTROL:
-                    left = 0
-                    right = 0
-                else:
-                    left = CONTROL['driveLeft']
-                    right = CONTROL['driveRight']
-                fswebcam = 'fswebcam --no-banner --flip v --flip h --no-shadow '
-                _time = str(time.time()).replace('.','')
-                filname = '{}-{}-{}.jpg'.format(_time,
-                    left, 
-                    right)
-                cmd = '{} /home/pi/xiaocar/fscam/{}'.format(fswebcam, filname)
-                # cmd = cmd.split(' ')
-                #cmd = [i for i in cmd if len(i) > 0]
-                os.system(cmd)
-
-                # subprocess.call(cmd, shell=True)
-                # p = subprocess.Popen(cmd)
-                # time.sleep(0.01)
+        global CONTROL
+        global lastFrame
+        while True:
+            if not 'driveLeft' in CONTROL:
+                left = 0
+                right = 0
+                
             else:
-                yield processor.stream
-                processor.event.set()
+        
+                left = CONTROL['driveLeft']
+                right = CONTROL['driveRight']
+
+            fswebcam = 'fswebcam --no-banner --flip v --flip h --no-shadow '
+                    
+            _time = str(time.time()).replace('.','')
+                    
+            filname = '{}-{}-{}.jpg'.format(_time, left, right)
+                    
+            cmd = '{} /home/pi/XiaoCar/auto/{}'.format(fswebcam, filname)
+                    
+            os.system(cmd)
+
+            lastFrame = '/home/pi/XiaoCar/auto/'+filname
+            time.sleep(0.1)
+
+# Image stream processing thread
+# class StreamProcessor(threading.Thread):
+
+#     def __init__(self, camera):
+#         super(StreamProcessor, self).__init__()
+#         # elf.stream = picamera.array.PiRGBArray(camera)
+#         # self.event = threading.Event()
+#         # self.terminated = False
+#         self.start()
+#         # self.begin = 0
+
+
+#     def run(self):
+#         global lastFrame
+#         global lockFrame
+#         global DATA
+#         global CONTROL
+#         global running
+
+#         print('in process stream run')
+#         # This method runs in a separate thread
+#         # while not self.terminated:
+#         while running:
+#             # Wait for an image to be written to the stream
+#             # if self.event.wait(1):
+#             if True:
+#                 try:
+#                     # Read the image and save globally
+#                     #self.stream.seek(0)
+#                     #retval, thisFrame = cv2.imencode('.jpg', self.stream.array)
+#                     # lockFrame.acquire()
+#                     # if 'driveLeft' in CONTROL:
+#                     #     DATA[str(time.time())] = {
+#                     #         'img' : thisFrame,
+#                     #         'left': CONTROL['driveLeft'],
+#                     #         'right': CONTROL['driveRight']}
+
+#                     # left = CONTROL['driveLeft']
+#                     # right = CONTROL['driveRight']
+
+#                     if not 'driveLeft' in CONTROL:
+#                         left = 0
+#                         right = 0
+#                     else:
+#                         left = CONTROL['driveLeft']
+#                         right = CONTROL['driveRight']
+
+#                     fswebcam = 'fswebcam --no-banner --flip v --flip h --no-shadow '
+                    
+#                     _time = str(time.time()).replace('.','')
+                    
+#                     filname = '{}-{}-{}.jpg'.format(_time,
+#                         left, 
+#                         right)
+                    
+#                     cmd = '{} /home/pi/xiaocar/fscam/{}'.format(fswebcam, filname)
+                    
+#                     os.system(cmd)
+#                     time.sleep(0.1)
+#                     # lastFrame = thisFrame
+#                     # lockFrame.release()
+#                 finally:
+#                     # Reset the stream and event
+#                     # self.stream.seek(0)
+#                     # self.stream.truncate()
+#                     # self.event.clear()
+#                     pass
+
+
+# # Image capture thread
+# class ImageCapture(threading.Thread):
+
+#     def __init__(self):
+
+#         super(ImageCapture, self).__init__()
+#         self.start()
+
+#     def run(self):
+#         # global camera
+#         global processor
+#         print('Start the stream using the video port')
+#         # camera.capture_sequence(self.TriggerStream(), format='bgr', use_video_port=True)
+#         self.TriggerStream()
+#         print('Terminating camera processing...')
+#         processor.terminated = True
+#         processor.join()
+#         print('Processing terminated.')
+
+#     # Stream delegation loop
+#     def TriggerStream(self):
+#         print('in trigger stream')
+#         global running
+#         global CONTROL
+#         while running:
+#             if processor.event.is_set():
+#                 if not 'driveLeft' in CONTROL:
+#                     left = 0
+#                     right = 0
+#                 else:
+#                     left = CONTROL['driveLeft']
+#                     right = CONTROL['driveRight']
+#                 fswebcam = 'fswebcam --no-banner --flip v --flip h --no-shadow '
+#                 _time = str(time.time()).replace('.','')
+#                 filname = '{}-{}-{}.jpg'.format(_time,
+#                     left, 
+#                     right)
+#                 cmd = '{} /home/pi/xiaocar/fscam/{}'.format(fswebcam, filname)
+#                 # cmd = cmd.split(' ')
+#                 #cmd = [i for i in cmd if len(i) > 0]
+#                 os.system(cmd)
+
+#                 # subprocess.call(cmd, shell=True)
+#                 # p = subprocess.Popen(cmd)
+#                 # time.sleep(0.01)
+#             else:
+#                 yield processor.stream
+#                 processor.event.set()
 
 
 class Driver(object):
@@ -257,14 +321,15 @@ class Driver(object):
                 self.PBR.SetMotor2(CONTROL['driveRight'])
 
     def drive_autonoumous(self):
-        if lastFrame is not None:
+        while True:
+            if lastFrame is not None:
 
-            data = list(predict(lastFrame))[0]
-            print(data)
-            # Set the motors to the new speeds
-            left, right = data[0], data[1]
-            self.PBR.SetMotor1(left)
-            self.PBR.SetMotor2(right)
+                data = list(predict(lastFrame))[0]
+                print(data)
+                # Set the motors to the new speeds
+                left, right = data[0], data[1]
+                self.PBR.SetMotor1(left)
+                self.PBR.SetMotor2(right)
 
     def drive(self):
         # Loop indefinitely
@@ -290,23 +355,24 @@ DATA = {}
 CONTROL = {}
 # Create the image buffer frame
 lastFrame = None
-lockFrame = threading.Lock()
+# lockFrame = threading.Lock()
 running = True
 imageWidth = 320                        # Width of the captured image in pixels
 imageHeight = 160                       # Height of the captured image in pixels
 frameRate = 4                           # Number of images to capture per second    
 
 # Startup sequence
-print('Setup camera')
-camera = picamera.PiCamera()
-camera.resolution = (imageWidth, imageHeight)
-camera.framerate = frameRate
-camera.hflip = True
-camera.vflip = True
+# print('Setup camera')
+# camera = picamera.PiCamera()
+# camera.resolution = (imageWidth, imageHeight)
+# camera.framerate = frameRate
+# camera.hflip = True
+# camera.vflip = True
 
 print('Setup the stream processing thread')
 sys.stdout.flush()
-processor = StreamProcessor(camera)
+# processor = StreamProcessor(camera)
+# processor = StreamProcessor(None)
 
 print('Wait ...')
 time.sleep(2)

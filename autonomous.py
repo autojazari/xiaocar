@@ -1,4 +1,4 @@
-from driver.piborg import Driver
+from driver import Driver
 from model import save_data
 
 def main():
@@ -6,12 +6,12 @@ def main():
     try:
         print()
         print('Press CTRL+C to quit')
-        driver.drive()        
+        driver.drive_autonoumous()        
     except SystemExit:
         print("exited")
     except KeyboardInterrupt:
         # CTRL+C exit, disable all drives
-        save_data(driver.DATA, file_path='robot-predicted.p')
+        # save_data(driver.DATA, file_path='robot-predicted.p')
         driver.PBR.MotorsOff()
 
 if __name__ == '__main__':
