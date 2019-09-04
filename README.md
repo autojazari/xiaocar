@@ -1,6 +1,6 @@
 # xiaocar
 
-This project attempts to recreate Nvidia's End-to-End Learning [Paper|https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf] using a Raspberry Pi Robot.
+This project attempts to recreate Nvidia's End-to-End Learning [Paper](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf) using a Raspberry Pi Robot.
 
 The robot was driven inside a living romm using a PS4 controller while it captured images of the environment, and recorded the Left/Right Motors' PWM control signals.
 
