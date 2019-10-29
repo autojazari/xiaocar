@@ -1,4 +1,4 @@
-flask==0.12
+flask==1.0
 # requires sudo apt-get install libi2c-dev i2c-tools python3-dev libffi-dev
 smbus-cffi==0.5.1
 scipy
